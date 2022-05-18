@@ -135,10 +135,10 @@ react-router-dom 会自动帮助我们安装 react-router 的依赖
 - strict 严格匹配（针对路由结尾的/）例如 /one/ 和 /one/two匹配
 - sensitive: boolean  设false则忽略路由的大小写
 
-### 3.2	<BrowserRouter> / <HashRouter>
+### 3.2	```<BrowserRouter> / <HashRouter>```
 前者基于 history 实现 后者基于 hash 实现
 
-### 3.3	<Link> / <NavLink>
+### 3.3	```<Link> / <NavLink>```
 最终都会被渲染成 a 标签
 区别是 NavLink 组件有两个属性 activeStyle 和 activeClassName 可以控制选中时的样式
 
