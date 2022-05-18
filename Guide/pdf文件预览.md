@@ -10,16 +10,19 @@ PDF.js是基于HTML5技术构建的，用于展示可移植文档格式的文件
 
 ### 引入
 我们并不想污染我们的index.html并且希望可以对每一个引用的框架有统一的版本管理。于是，我们搜寻到一个包：pdfjs-dist。    
-``` yarn add pdfjs-dist```
+要指定版本，否则很多版本在引入或运行时会报错，网上推荐的两个稳定的版本：@2.0.943，@2.2.228 
+``` yarn add pdfjs-dist@2.2.228 ```
 
 在需要使用PDF.js的文件中如下引用:  
 ```
-import PDFJS from 'pdfjs-dist';
+import PDFJS from 'pdfjs-dist'
 PDFJS.GlobalWorkerOptions.workerSrc = require('pdfjs-dist/build/pdf.worker.entry.js')
 ```
 这两个文件包含了获取、解析和展示PDF文档的方法，但是解析和渲染PDF需要较长的时间，可能会阻塞其它JS代码的运行。    
 为解决该问题，pdf.js依赖了HTML5引入的Web Workers——通过从主线程中移除大量CPU操作（如解析和渲染）来提升性能。    
-PDF.js的API都会返回一个Promise，使得我们可以优雅的处理异步操作。    
+PDF.js的API都会返回一个Promise，使得我们可以优雅的处理异步操作。  
+
+**3.跨域问题，文件系统服与前台页面是非同源的 详见参考2** 
 
 ### 使用
 - 先要有一个容器，比如：  
@@ -95,6 +98,12 @@ const getPdfBlob = async (reportFileId) => {
 - 使用Text-Layers渲染
 PDF.js支持在使用Canvas渲染的PDF页面上渲染文本图层。    
 然而，这个功能需要用到额外的两个文件：text_layer_builder.js和text_layer_builder.css。我们可以在GitHub的repo中获取到。
+```
+import { TextLayerBuilder } from 'pdfjs-dist/web/pdf_viewer'
+import 'pdfjs-dist/web/pdf_viewer.css'
+```
 
 具体的没再试，不搬了，直接放参考链接：
-https://segmentfault.com/a/1190000016963084
+1基本使用：https://segmentfault.com/a/1190000016963084
+2解决跨域问题：https://www.jianshu.com/p/49e5ba6c6f7d
+3官网API：https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html
