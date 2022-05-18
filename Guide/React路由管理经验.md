@@ -47,7 +47,8 @@ forward：向前改变路径
 back：向后改变路径
 
 简单演示几个方法：
-<div id="app">
+```
+  <div id="app">
   <a href="/home">home</a>
   <a href="/about">about</a>
   <div class="router-view"></div>
@@ -83,7 +84,7 @@ back：向后改变路径
     }
   }
 </script>
-
+```
 虽然history看起来是一个正常的url 但是如果部署到服务器上的话 还需要做额外的配置
 比如 /home/article 这个路径对服务器来说可能根本没有对应的目录 需要做nginx配置
 
@@ -92,10 +93,10 @@ back：向后改变路径
 
 ## 2.	React 中的路由
 
-React Router 的版本从 4 开始，路由不再集中在一个包中进行管理了
-react-router 是 router 的核心部分代码
-react-router-dom 是用于浏览器的
-react-router-native 是用于原生应用的
+- React Router 的版本从 4 开始，路由不再集中在一个包中进行管理了
+- react-router 是 router 的核心部分代码
+- react-router-dom 是用于浏览器的
+- react-router-native 是用于原生应用的
 
 安装时 我们只需安装 react-router-dom 即可
 react-router-dom 会自动帮助我们安装 react-router 的依赖
@@ -104,12 +105,13 @@ react-router-dom 会自动帮助我们安装 react-router 的依赖
 ### 3.1	<Route>
 相当于一个路由的占位符 当路由匹配成功时 会展示对应的组件
 有三种渲染方式：
-<Route component>
-<Route render>
-<Route children>
+- <Route component>
+- <Route render>
+- <Route children>
 
 分别举个例子：
-<Router>
+```
+  <Router>
       <Link to="/home">home</Link>
       <Link to="/user">user</Link>
       <Link to="/child">child</Link>
@@ -126,12 +128,12 @@ react-router-dom 会自动帮助我们安装 react-router 的依赖
         path="/child"
       />
     </Router>
-
+```
 此外 Route 的属性还有：
-path: string｜string[] 可以匹配一个 url 也可以匹配多个 url
-exact 精确匹配（针对路由层级）例如 /one和 /one/ 不匹配
-strict 严格匹配（针对路由结尾的/）例如 /one/ 和 /one/two匹配
-sensitive: boolean  设false则忽略路由的大小写
+- path: string｜string[] 可以匹配一个 url 也可以匹配多个 url
+- exact 精确匹配（针对路由层级）例如 /one和 /one/ 不匹配
+- strict 严格匹配（针对路由结尾的/）例如 /one/ 和 /one/two匹配
+- sensitive: boolean  设false则忽略路由的大小写
 
 ### 3.2	<BrowserRouter> / <HashRouter>
 前者基于 history 实现 后者基于 hash 实现
@@ -146,6 +148,7 @@ sensitive: boolean  设false则忽略路由的大小写
 ### 3.5	<Switch>
 只渲染第一个匹配到的路由
 所以如果路由有包含关系则需要注意顺序，或者使用exact精确匹配：
+ ```
     <Router>
       <Switch>
         <Route component={Home} path="/" exact />
@@ -153,9 +156,10 @@ sensitive: boolean  设false则忽略路由的大小写
         <Route component={NoMatch} />
       </Switch>
     </Router>
-
+```
 ### 3.6	withRouter
 一个高阶函数 可以为那些不受 react-router 路由控制的组件注入 history/match/location 三个路由属性 必须作为 HashRouter / BrowserRouter 的子组件使用
+```
 import { withRouter, BrowserRouter as Router } from 'react-router-dom';
 
 function Home(props: any) {
@@ -178,35 +182,39 @@ export default function article() {
     </Router>
   );
 }
-
+```
 ### 3.7	Hooks
 useParams / useLocation / useRouteMatch / useHistory
 
 ### 3.8	react-router-config
 统一的管理我们的路由信息 这个包和V5绑定
+```
 import { renderRoutes } from 'react-router-config';
-
+        
+...
+        
 <Router>
-      <Link to="/">home</Link>
-      <Link to="/about">about</Link>
-      {renderRoutes(routes)}
-    </Router>
-
+   <Link to="/">home</Link>
+   <Link to="/about">about</Link>
+   {renderRoutes(routes)}
+</Router>
+```
 ## 4.	react-router-dom V6
 V6有一些破坏性的改动 目前正在致力于做V5的向前兼容 
 在项目中 目前还是使用稳定的v5版本
 这里列举一些比较常用的 且有变化的改动
 
 ### 4.1	<Route>
-<Route path="/users" component={Users} />
-<Route path="users/*" element={<Users />} />
+```<Route path="/users" component={Users} />```
+```<Route path="users/*" element={<Users />} />```
 
 ### 4.2	使用 useNavigate 代替 useHistory
-history.push("/home");
-navigate("/home");
+```history.push("/home");```
+```navigate("/home");```
 
 ### 4.3	使用 useRoutes 代替 react-router-config
-useRoutes([
+```
+  useRoutes([
     { path: "/", element: <Home /> },
     { path: "dashboard", element: <Dashboard /> },
     {
@@ -221,11 +229,12 @@ useRoutes([
     // 404
     { path: "*", element: <NotFound /> },
   ]);
-
+```
 ## 5.	项目中的路由管理
 系统区分不同用户角色时，项目中的路由可能会有两种划分，一种与角色权限无关，例如官网路由，一种与角色权限相关，例如工作台路由。与角色无关的或较简单的角色相关路由可由前端自行管理生成菜单，而与角色相关的较复杂的权限路由则一般需要从后台获取，经过前端处理生成对应的菜单。
 ### 5.1	权限路由数据处理
-后端返回的权限路由常见的数据结构有两种，一种是树形对象；另一种是对象数组，使用类似pid的字段标识菜单的父子关系。如果后端返回的是树形对象，前端可直接用于渲染菜单。如果后端返回的是对象数组则需要前端先将其处理为树形对象，然后再传给菜单组件进行渲染。比如羚羊项目中，后端使用UAP做用户体系，后端不处理的话返回的结构即对象数组。则需要类似如下代码段进行结构转化：
+后端返回的权限路由常见的数据结构有两种，一种是树形对象；另一种是对象数组，使用类似pid的字段标识菜单的父子关系。如果后端返回的是树形对象，前端可直接用于渲染菜单。如果后端返回的是对象数组则需要前端先将其处理为树形对象，然后再传给菜单组件进行渲染。比如XX项目中，后端使用UAP做用户体系，后端不处理的话返回的结构即对象数组。则需要类似如下代码段进行结构转化：
+```
 // 获取菜单列表(平行结构 => 树状结构)
 export const getMenuList = (list: any[], parentId?: string) => {
   return list
@@ -241,9 +250,10 @@ export const getMenuList = (list: any[], parentId?: string) => {
       }
     })
 }
+```
 其中children是自己菜单，include是该菜单下包含的非菜单项的子页面路由，newPage区分是否需要新标签页打开。
 ### 5.2	菜单组件
-目前开发的最多只涉及二级菜单，所以目前项目的菜单组件都只支持到二级菜单，虽然博望项目中遇到了三级，但被拆分为顶部菜单和二级的侧边栏菜单两部分进行渲染，也不是真正意义的三级。
+目前开发的最多只涉及二级菜单，所以目前项目的菜单组件都只支持到二级菜单，虽然XX项目中遇到了三级，但被拆分为顶部菜单和二级的侧边栏菜单两部分进行渲染，也不是真正意义的三级。
 
 ### 5.3	重定向
 为了避免用户在浏览器中输入缺省的路由而出现空白页面，除了后端会做nginx配置，前端也会做相应的重定向处理，保证用户访问正常
