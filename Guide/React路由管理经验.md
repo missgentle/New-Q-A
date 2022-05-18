@@ -9,11 +9,11 @@
 - 1.2	History	    
 - 2	React 中的路由	    
 - 3	react-router-dom V5	    
-- 3.1	<Route>	    
-- 3.2	<BrowserRouter> / <HashRouter>	    
-- 3.3	<Link> / <NavLink>	    
-- 3.4	<Redirect>	    
-- 3.5	<Switch>	    
+- 3.1	```<Route>```	    
+- 3.2	```<BrowserRouter> / <HashRouter>```	    
+- 3.3	```<Link> / <NavLink>```	    
+- 3.4	```<Redirect>```	    
+- 3.5	```<Switch>```	    
 - 3.6	withRouter	    
 - 3.7	Hooks	    
 - 3.8	react-router-config	    
