@@ -4,29 +4,29 @@
 
  
 # 目录
-- 1.	前端路由原理	3    
-- 1.1	Hash	3    
-- 1.2	History	3    
-- 2.	React 中的路由	4    
-- 3.	react-router-dom V5	4    
-- 3.1	<Route>	4    
-- 3.2	<BrowserRouter> / <HashRouter>	5    
-- 3.3	<Link> / <NavLink>	5    
-- 3.4	<Redirect>	5    
-- 3.5	<Switch>	5    
-- 3.6	withRouter	5    
-- 3.7	Hooks	6    
-- 3.8	react-router-config	6    
-- 4.	react-router-dom V6	6    
-- 4.1	<Route>	7    
-- 4.2	使用 useNavigate 代替 useHistory	7    
-- 4.3	使用 useRoutes 代替 react-router-config	7    
-- 5.	项目中的路由管理	7    
-- 5.1	权限路由数据处理	7    
-- 5.2	菜单组件	7    
-- 5.3	重定向	7    
-- 5.4	权限控制	8    
-- 参考	9    
+- 1	前端路由原理	    
+- 1.1	Hash	    
+- 1.2	History	    
+- 2	React 中的路由	    
+- 3	react-router-dom V5	    
+- 3.1	<Route>	    
+- 3.2	<BrowserRouter> / <HashRouter>	    
+- 3.3	<Link> / <NavLink>	    
+- 3.4	<Redirect>	    
+- 3.5	<Switch>	    
+- 3.6	withRouter	    
+- 3.7	Hooks	    
+- 3.8	react-router-config	    
+- 4	react-router-dom V6	    
+- 4.1	<Route>	    
+- 4.2	使用 useNavigate 代替 useHistory	    
+- 4.3	使用 useRoutes 代替 react-router-config	    
+- 5	项目中的路由管理	    
+- 5.1	权限路由数据处理	    
+- 5.2	菜单组件	    
+- 5.3	重定向	    
+- 5.4	权限控制	    
+- 参考	    
 
 
 
@@ -48,7 +48,7 @@ back：向后改变路径
 
 简单演示几个方法：
 ```
-  <div id="app">
+<div id="app">
   <a href="/home">home</a>
   <a href="/about">about</a>
   <div class="router-view"></div>
@@ -105,9 +105,9 @@ react-router-dom 会自动帮助我们安装 react-router 的依赖
 ### 3.1	<Route>
 相当于一个路由的占位符 当路由匹配成功时 会展示对应的组件
 有三种渲染方式：
-- <Route component>
-- <Route render>
-- <Route children>
+- ```<Route component>```
+- ```<Route render>```
+- ```<Route children>```
 
 分别举个例子：
 ```
