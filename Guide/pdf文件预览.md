@@ -104,6 +104,6 @@ import 'pdfjs-dist/web/pdf_viewer.css'
 ```
 
 具体的没再试，不搬了，直接放参考链接：
-1基本使用：https://segmentfault.com/a/1190000016963084
-2解决跨域问题：https://www.jianshu.com/p/49e5ba6c6f7d
-3官网API：https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html
+- 1基本使用：https://segmentfault.com/a/1190000016963084
+- 2解决跨域问题：https://www.jianshu.com/p/49e5ba6c6f7d
+- 3官网API：https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib.html
