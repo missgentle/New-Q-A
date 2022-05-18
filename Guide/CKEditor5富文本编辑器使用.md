@@ -89,7 +89,7 @@ https://ckeditor.com/docs/ckeditor5/latest/features/images/image-upload/image-up
 richtext-upload-hooks.ts
 ```
 import { httpUploadWithDetail } from '@/service/http_request'
-import { message } from '@gyzn/linglong-ui'
+import { message } from 'antd'
 
 export default (loader) => {
   const upload = () => {
