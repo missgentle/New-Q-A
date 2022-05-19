@@ -185,54 +185,9 @@ export default function article() {
 }
 ```
 ### 3.7	Hooks
-useParams / useLocation / useRouteMatch / useHistory
-```ROUTE_APP_DETAIL: '/app/detail/:id'```
-```const { id: appId } = useParams<any>()```
-```
-export function encodeRoute(routePattern: string, params = {}, query = {}) {
-  const [path, search] = routePattern.split('?') // 先分离自带的search字符串
-  const pathString = path
-    .split('/')
-    .map((item) => {
-      if (/:(.*)/.test(item) && RegExp.$1 in params) {
-        return params[RegExp.$1]
-      }
-      return item
-    })
-    .join('/')
-  return changeRouteSearch(query, false, search ? `${pathString}?${search}` : pathString)
-}
-
-export function extractSearchString(searchStr = ''): { [key: string]: string } {
-  // 解析search字段
-  const query = {}
-  if (/\??(.*?)$/.test(searchStr)) {
-    RegExp.$1.split('&').forEach((item) => {
-      if (item) {
-        const [k, v] = item.split('=')
-        query[k] = v
-      }
-    })
-  }
-  return query
-}
-```
-```
-History.push( encodeRoute(RoutePatterns.ROUTE_OPERATION_MANUAL, {}, { from: Location.pathname }) )
-```
-```
- // 返回之前的页面（带from参数）
-  const backToFromPage = (from = '') => {
-    const search = extractSearchString(location.search)
-    const _from = from || (search.from ? decodeURIComponent(`${search.from}`) : '')
-    if (_from) {
-      !isWorkTablePage ? History.push(_from) : (location.href = _from)
-      return
-    }
-    // 其余情况，返回至首页
-    History.push(RoutePatterns.ROUTE_HOME)
-  }
-```
+useParams / useLocation / useRouteMatch / useHistory    
+```ROUTE_APP_DETAIL: '/app/detail/:id'```    
+```const { id: appId } = useParams<any>()```    
 
 ### 3.8	react-router-config
 统一的管理我们的路由信息 这个包和V5绑定
@@ -582,6 +537,53 @@ export const getUrlsFromRoutes = (list: any[]) => {
   recursion(list)
   return temp
 }
+```
+```
+// 路由带参
+export function encodeRoute(routePattern: string, params = {}, query = {}) {
+  const [path, search] = routePattern.split('?') // 先分离自带的search字符串
+  const pathString = path
+    .split('/')
+    .map((item) => {
+      if (/:(.*)/.test(item) && RegExp.$1 in params) {
+        return params[RegExp.$1]
+      }
+      return item
+    })
+    .join('/')
+  return changeRouteSearch(query, false, search ? `${pathString}?${search}` : pathString)
+}
+
+// 取路由参数
+export function extractSearchString(searchStr = ''): { [key: string]: string } {
+  // 解析search字段
+  const query = {}
+  if (/\??(.*?)$/.test(searchStr)) {
+    RegExp.$1.split('&').forEach((item) => {
+      if (item) {
+        const [k, v] = item.split('=')
+        query[k] = v
+      }
+    })
+  }
+  return query
+}
+```
+```
+History.push( encodeRoute(RoutePatterns.ROUTE_OPERATION_MANUAL, {}, { from: Location.pathname }) )
+```
+```
+ // 返回之前的页面（带from参数）
+  const backToFromPage = (from = '') => {
+    const search = extractSearchString(location.search)
+    const _from = from || (search.from ? decodeURIComponent(`${search.from}`) : '')
+    if (_from) {
+      !isWorkTablePage ? History.push(_from) : (location.href = _from)
+      return
+    }
+    // 其余情况，返回至首页
+    History.push(RoutePatterns.ROUTE_HOME)
+  }
 ```
 
  
