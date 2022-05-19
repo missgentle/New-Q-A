@@ -533,6 +533,56 @@ const getMemu = async () => {
   }
 ```
 
+*补充涉及的utils方法：
+```
+export const getTopLevelUrl = (routes: RouteInfo[]) => {
+  return routes?.map((item) => item.value)
+}
+
+export const getTopLevelRoutes = (routes: RouteInfo[]) => {
+  return routes?.map((item) => {
+    const { name, icon, value, disabled, isShow, newPage, onClick } = item || {}
+    return {
+      name,
+      icon,
+      value,
+      disabled,
+      isShow,
+      newPage,
+      onClick,
+    }
+  })
+}
+
+export const getChildRoutes = (pValue: string, routes: RouteInfo[]) => {
+  let child = null
+  routes?.map((item) => {
+    if (item?.value === pValue) {
+      child = item?.children
+    } else if (item?.children) {
+      const temp = getChildRoutes(pValue, item?.children)
+      if (temp) {
+        child = temp
+      }
+    }
+  })
+  return child
+}
+
+export const getUrlsFromRoutes = (list: any[]) => {
+  const temp = []
+  const recursion = (list) => {
+    list?.map((item) => {
+      temp.push(item?.value)
+      if (item?.children?.length) {
+        recursion(item?.children)
+      }
+    })
+  }
+  recursion(list)
+  return temp
+}
+```
 
  
 ## 参考
