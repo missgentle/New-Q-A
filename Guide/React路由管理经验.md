@@ -143,7 +143,8 @@ react-router-dom 会自动帮助我们安装 react-router 的依赖
 区别是 NavLink 组件有两个属性 activeStyle 和 activeClassName 可以控制选中时的样式
 
 ### 3.4	<Redirect>
-重定向
+重定向    
+```<Redirect from="/home" to="/login" />```
 
 ### 3.5	<Switch>
 只渲染第一个匹配到的路由
@@ -185,6 +186,53 @@ export default function article() {
 ```
 ### 3.7	Hooks
 useParams / useLocation / useRouteMatch / useHistory
+```ROUTE_APP_DETAIL: '/app/detail/:id'```
+```const { id: appId } = useParams<any>()```
+```
+export function encodeRoute(routePattern: string, params = {}, query = {}) {
+  const [path, search] = routePattern.split('?') // 先分离自带的search字符串
+  const pathString = path
+    .split('/')
+    .map((item) => {
+      if (/:(.*)/.test(item) && RegExp.$1 in params) {
+        return params[RegExp.$1]
+      }
+      return item
+    })
+    .join('/')
+  return changeRouteSearch(query, false, search ? `${pathString}?${search}` : pathString)
+}
+
+export function extractSearchString(searchStr = ''): { [key: string]: string } {
+  // 解析search字段
+  const query = {}
+  if (/\??(.*?)$/.test(searchStr)) {
+    RegExp.$1.split('&').forEach((item) => {
+      if (item) {
+        const [k, v] = item.split('=')
+        query[k] = v
+      }
+    })
+  }
+  return query
+}
+```
+```
+History.push( encodeRoute(RoutePatterns.ROUTE_OPERATION_MANUAL, {}, { from: Location.pathname }) )
+```
+```
+ // 返回之前的页面（带from参数）
+  const backToFromPage = (from = '') => {
+    const search = extractSearchString(location.search)
+    const _from = from || (search.from ? decodeURIComponent(`${search.from}`) : '')
+    if (_from) {
+      !isWorkTablePage ? History.push(_from) : (location.href = _from)
+      return
+    }
+    // 其余情况，返回至首页
+    History.push(RoutePatterns.ROUTE_HOME)
+  }
+```
 
 ### 3.8	react-router-config
 统一的管理我们的路由信息 这个包和V5绑定
@@ -231,7 +279,37 @@ V6有一些破坏性的改动 目前正在致力于做V5的向前兼容
   ]);
 ```
 ## 5.	项目中的路由管理
-系统区分不同用户角色时，项目中的路由可能会有两种划分，一种与角色权限无关，例如官网路由，一种与角色权限相关，例如工作台路由。与角色无关的或较简单的角色相关路由可由前端自行管理生成菜单，而与角色相关的较复杂的权限路由则一般需要从后台获取，经过前端处理生成对应的菜单。
+系统区分不同用户角色时，项目中的路由可能会有两种划分，一种与角色权限无关，例如官网路由，一种与角色权限相关，例如工作台路由。    
+与角色无关的或较简单的角色相关路由可由前端自行管理生成菜单，比如XX项目路由都是前端自行管理的，如下：    
+```
+export const getRoutes = (currentRole: AccountTypeEnum) => {
+  return [
+    {
+      value: RoutePatterns.ROUTE_WORK_TABLE_APP_OVERVIEW,
+      name: '应用总览',
+      isShow: currentRole === AccountTypeEnum.GOVERNMENT_MANAGER,
+    },
+    {
+      value: RoutePatterns.ROUTE_WORK_TABLE_APP_MANAGE,
+      name: '应用管理',
+      isShow: currentRole === AccountTypeEnum.GOVERNMENT_MANAGER,
+    },
+    {
+      value: RoutePatterns.ROUTE_WORK_TABLE_APP_COLLECT,
+      name: '应用收藏管理',
+      isShow: currentRole === AccountTypeEnum.ENTERPRISE_MANAGER,
+    },
+    {
+      value: RoutePatterns.ROUTE_WORK_TABLE_APP_PUBLISH,
+      name: '应用发布管理',
+      isShow: currentRole === AccountTypeEnum.ENTERPRISE_MANAGER,
+    },
+  ].filter((item) => item?.isShow)
+}
+
+```
+而与角色相关的较复杂的权限路由则一般需要从后台获取，经过前端处理生成对应的菜单。
+
 ### 5.1	权限路由数据处理
 后端返回的权限路由常见的数据结构有两种，一种是树形对象；另一种是对象数组，使用类似pid的字段标识菜单的父子关系。如果后端返回的是树形对象，前端可直接用于渲染菜单。如果后端返回的是对象数组则需要前端先将其处理为树形对象，然后再传给菜单组件进行渲染。比如XX项目中，后端使用UAP做用户体系，后端不处理的话返回的结构即对象数组。则需要类似如下代码段进行结构转化：
 ```
@@ -251,16 +329,209 @@ export const getMenuList = (list: any[], parentId?: string) => {
     })
 }
 ```
-其中children是自己菜单，include是该菜单下包含的非菜单项的子页面路由，newPage区分是否需要新标签页打开。
+其中children是子级菜单路由，include是该菜单下包含的非菜单项的子页面路由，由前端自行管理。
+        
 ### 5.2	菜单组件
-目前开发的最多只涉及二级菜单，所以目前项目的菜单组件都只支持到二级菜单，虽然XX项目中遇到了三级，但被拆分为顶部菜单和二级的侧边栏菜单两部分进行渲染，也不是真正意义的三级。
+目前开发的最多只涉及二级菜单，虽然博望项目中遇到了三级，但被拆分为顶部菜单和二级的侧边栏菜单两部分进行渲染，也不是真正意义的三级。但我们的菜单组件可以支持多级菜单，涉及主要代码如下：
+```
+export interface MenuItem {
+  key: string
+  label: string
+  disabled?: boolean
+  children?: MenuItem[]
+}
+
+const [openMenu, setOpenMenu] = useState<Array<string>>([...defaultOpenMenu])
+
+  // 菜单信息
+  const getMenuItems = (routes:RouteInfo[]) => {
+    return routes?.map((item: RouteInfo) => {
+      const {
+        value = '',
+        name = '',
+        disabled = false,
+        children,
+      } = item || {}
+      return {
+        key: value,
+        label: name,
+        disabled,
+        children: getMenuItems(children),
+      } as MenuItem
+    }) 
+  }
+
+  const menuItems = useMemo(() => {
+    return getMenuItems(routes)
+  }, [routes])
+
+// 选中菜单项
+  const selectItemId = useMemo(() => {
+    let selectedItem = menuItems?.find((item: any) => matchRoute(item?.key))
+    if (selectedItem?.children?.length > 0) {
+      setOpenMenu([selectedItem?.key])
+      const childMenuItems = selectedItem.children
+      selectedItem = childMenuItems?.find((item: any) => matchRoute(item?.link))
+    }
+    return selectedItem?.key || ''
+  }, [menuItems, Location])
+
+const onClick: MenuProps['onClick'] = e => {
+  History.push(e?.key)
+}
+
+<Menu
+   className="sider-menu"
+   mode="inline"
+   selectedKeys={[selectItemId]}
+   openKeys={openMenu}
+   onClick={onClick}
+   onOpenChange={(openKeys: string[]) => {
+     setOpenMenu(openKeys)
+   }}
+   items={menuItems}
+ ></Menu>
+
+```
+注意antd v4.20.0 用法升级：
+-- 在 4.20.0 版本后，我们提供了 <Menu items={[...]} /> 的简写方式，有更好的性能和更方便的数据组织方式，开发者不再需要自行拼接 JSX。同时我们废弃了原先的写法，你还是可以在 4.x 继续使用，但会在控制台看到警告，并会在 5.0 后移除。 --
 
 ### 5.3	重定向
-为了避免用户在浏览器中输入缺省的路由而出现空白页面，除了后端会做nginx配置，前端也会做相应的重定向处理，保证用户访问正常
+为了避免用户在浏览器中输入缺省的路由而出现空白页面，除了后端会做nginx配置，前端也会做相应的重定向处理，保证用户访问正常。自定义RouteComponent组件完整代码如下：    
+```
+import React, { useMemo, Fragment } from 'react'
+import { Route, Redirect, matchPath } from 'react-router-dom'
+import { getTopLevelUrl, getChildRoutes } from '@/utils/menu-util'
+import { observer } from 'mobx-react'
+import { RouteInfo } from '@/stores'
 
+export default observer(
+  (props: {
+    rootRoute: string  // 一级根路由
+    routes: RouteInfo[]  // 路由树
+    components: { [propName: string]: React.ComponentType } // 对应路由要渲染组件
+  }) => {
+    const { rootRoute, routes, components } = props || {}
+
+// 递归获取要重定向到哪里
+    const getRedirectUrl = (rootUrl: string, cRoutes = routes) => {
+      const matchUrl = matchPath(rootUrl, { path: getTopLevelUrl(cRoutes), exact: true })?.path
+      if (!matchUrl) {
+        return getRedirectUrl(cRoutes[0]?.value, cRoutes)
+      }
+      if (!getChildRoutes(matchUrl, cRoutes)) {
+        return matchUrl
+      }
+      return getRedirectUrl(matchUrl, getChildRoutes(matchUrl, cRoutes))
+    }
+
+    const createRoutes = useMemo(() => {
+      const resultRoutes = []
+      const recursion = (cRoutes = routes) => {
+        cRoutes?.map((el, index) => {
+          const { value, include = [], children = null } = el || {}
+          if (value && children) {
+            resultRoutes.push(
+              <Route exact path={value} key={value}>
+                <Redirect from={value} to={getRedirectUrl(value, children)} />
+              </Route>,
+            )
+            recursion(children)
+          } else {
+            resultRoutes.push(
+              <Fragment key={value || index}>
+                <Route exact path={value} component={components[value]} />
+                {include?.map((item, i) => {
+                  return (
+                    <Route
+                      key={item?.value || i}
+                      exact
+                      path={item?.value}
+                      component={components[item?.value]}
+                    />
+                  )
+                })}
+              </Fragment>,
+            )
+          }
+        })
+      }
+      recursion()
+      return resultRoutes
+    }, [routes])
+
+    return (
+      <>
+        {
+          // 一级重定向
+          rootRoute && routes?.length > 0 && (
+            <Route exact path={rootRoute}>
+              <Redirect from={rootRoute} to={getRedirectUrl(rootRoute)} />
+            </Route>
+          )
+        }
+        {createRoutes}
+      </>
+    )
+  },
+)
+```
+这里使用递归逻辑满足多级路由的情形，所以任何层级的路由管理都可以直接复用。    
+其中组件结构如下：
+```
+ export const components = {
+  [RoutePatterns.ROUTE_WORK_TABLE_APP_OVERVIEW]: lazy(
+    () => import('@/containers/work_table/app_overview'),
+  ),
+  [RoutePatterns.ROUTE_WORK_TABLE_APP_MANAGE]: lazy(
+    () => import('@/containers/work_table/app_manage'),
+  ),
+  [RoutePatterns.ROUTE_WORK_TABLE_APP_COLLECT]: lazy(
+    () => import('@/containers/work_table/app_collect'),
+  ),
+  [RoutePatterns.ROUTE_WORK_TABLE_APP_PUBLISH]: lazy(
+    () => import('@/containers/work_table/app_publish'),
+  ),
+}
+```
+路由树结构参考5.1权限路由数据处理    
+        
 ### 5.4	权限控制
-为了避免用户直接在浏览器中输入路由访问无权限的页面，除了后端会做接口权限，前端也需要在项目入口文件中加一些逻辑进行权限验证以及退阶重定向的处理。
-
+为了避免用户直接在浏览器中输入路由访问无权限的页面，除了后端会做接口权限，前端也需要在项目入口文件中加一些逻辑进行权限验证以及退阶重定向的处理。    
+这里以目前最复杂的项目为例，关键代码如下：
+```
+const getMemu = async () => {
+    try {
+      const res = await httpGetMenuInfo()
+      if (res?.code === 0) {
+        const { bigscreen = [] } = res?.data
+        authDataStore.setScreenRoutes(getChildRoutes(RoutePatterns.ROUTE_GOVERN_SCREEN, bigscreen))
+        // 判断当前url是否存在于权限菜单中
+        const authUrls = getUrlsFromRoutes(bigscreen)
+        const isCurUrlAuth = authUrls?.some((item: any) => matchRoute(item, true, true))
+        // 跳转到相应页面
+        if (isCurUrlAuth) {
+          getGovernScreenData()
+          govern_screen_timer = simulateInterval(() => {
+            getGovernScreenData()
+          }, 120000)
+        } else if (bigscreen?.length) {
+          History.replace(screen[0]?.value)
+          getGovernScreenData()
+          govern_screen_timer = simulateInterval(() => {
+            getGovernScreenData()
+          }, 120000)
+        } else {
+          window.location.replace(RoutePatterns.ROUTE_HOME)
+        }
+      } else {
+        throw new Error('菜单获取失败')
+      }
+    } catch {
+      console.log('菜单获取失败')
+    }
+  }
+```
 
 
  
