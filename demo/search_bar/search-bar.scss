@@ -1,0 +1,37 @@
+$prefix: 'work-table-search-bar';
+
+.#{$prefix}-search {
+  display: flex;
+  background: #ffffff;
+  padding: 20px;
+  margin: 20px 0px;
+
+  .#{$prefix}-search-form {
+    flex: 1;
+    .ant-form-item {
+      margin-bottom: 0px;
+    }
+    .ant-row:not(:last-child){
+      margin-bottom: 20px;
+    }
+  }
+
+  .#{$prefix}-search-action {
+    margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    .#{$prefix}-search-action-item {
+      display: flex;
+      justify-content: flex-end;
+      padding-left: 100px;
+    }
+
+    .#{$prefix}-search-action-btn {
+      margin-left: 20px;
+      height: 32px;
+      font-size: 14px;
+    }
+  }
+}
