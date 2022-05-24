@@ -150,8 +150,8 @@ export default observer(
     return (
       <div className={sc(`search ${className}`)}>
         <Form form={form} name="advanced_search" className={sc('search-form')}>
-          {searchListPro?.map((rowItems) => (
-            <Row gutter={40}>
+          {searchListPro?.map((rowItems, index) => (
+            <Row gutter={40} key={index}>
               {rowItems?.map((searchItem) => (
                 <Col span={24 / colNum} key={searchItem?.key}>
                   {renderSearchItemControl(searchItem)}
