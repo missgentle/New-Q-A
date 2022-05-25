@@ -5,5 +5,5 @@
 
 - g2/echarts图标封装 chart-component
 - 检索条 search_bar
-- 离开前提示 my-prompt.tsx
+- 离开前保存 my-prompt.tsx 离开前提示 my-prompt-simple.tsx
 - 富文本编辑器调研 react-richtext.zip
