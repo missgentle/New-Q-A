@@ -72,3 +72,15 @@ export default (props: {
     />
   )
 }
+
+
+/* 使用方法 */
+/* 
+<SelfPrompt
+  onOk={(location) => {
+    setOriginFormDetail(formValues) // isSame=>true
+    setTimeout(() => { History.push(location) }, 0)
+  }}
+  when={!isSame}
+/> 
+*/
