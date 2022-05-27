@@ -73,7 +73,7 @@ export default observer(
 
     const searchListPro = useMemo(() => {
       const proList = []
-      for (let i = 0; i < searchList.length; i += colNum) {
+      for (let i = 0; i < searchList?.length; i += colNum) {
         proList.push(searchList.slice(i, i + colNum))
       }
       return proList
