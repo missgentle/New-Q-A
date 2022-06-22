@@ -1,22 +1,43 @@
 <template>
-  <view>
-    <u-popup v-model="isShow" mode="bottom" @change="popChange">
-      <view class="super-date-picker-popup-container">
+  <view class="super-date-picker-container">
+    <u-cell-group>
+      <u-cell-item
+        :class="center ? 'cell-value-center' : ''"
+        :style="{ height: `${barHeight}rpx` }"
+        :title="title"
+        :arrow="arrow"
+        :arrow-direction="arrowDirection"
+        :value="`${startTime} ~ ${endTime}`"
+        @click="showPicker = true"
+      >
+        <u-icon
+          v-if="showRightIcon"
+          slot="right-icon"
+          :name="rightIcon"
+          size="32"
+          color="#333"
+        ></u-icon>
+      </u-cell-item>
+    </u-cell-group>
+    <u-popup v-model="showPicker" mode="bottom">
+      <view class="popup-container">
         <view class="popup-title">
           <view class="u-popup-cancel-btn" @click="close">取消</view>
-          <view class="u-title">选择时间</view>
-          <view class="u-popup-sure-btn" @click="handleSelectSure">确定</view>
+          <view class="u-title">{{ pickerTitle }}</view>
+          <view class="u-popup-sure-btn" @click="handleSelectConfirm"
+            >确定</view
+          >
         </view>
         <view class="select-time-display">
           <view
-            @click="timeChose(0)"
+            @click="timeSwitch(0)"
             class="u-time-label"
             :style="{ color: timeIndex == 0 ? '#008fff' : '#666' }"
             >{{ startTimeDisplay }}</view
           >
           ~
           <view
-            @click="timeChose(1)"
+            @click="timeSwitch(1)"
             class="u-time-label"
             :style="{ color: timeIndex == 1 ? '#008fff' : '#666' }"
             >{{ endTimeDisplay }}</view
@@ -26,8 +47,8 @@
           <picker-view
             v-if="visible"
             class="mpvue-picker-view"
-            :indicator-style="{ height: '100rpx' }"
-            :value.async="curData"
+            :value="curData"
+            :indicator-style="indicatorStyle"
             @change="bindChange"
           >
             <picker-view-column>
@@ -55,54 +76,150 @@
 <script lang="ts">
 import Vue from "vue";
 import dayjs from "dayjs";
+import weekOfYear from "dayjs/plugin/weekOfYear";
+dayjs.extend(weekOfYear);
 
 export default Vue.extend({
   name: "super-date-picker",
   props: {
-    isShow: {
+    mode: {
+      type: String, // 可选模式 date | week | month | year
+      default: "date",
+    },
+    barHeight: {
+      type: Number,
+      default: 100,
+    },
+    title: {
+      type: String,
+      default: "",
+    },
+    center: {
       type: Boolean,
       default: false,
     },
-    mode: {
+    arrow: {
+      type: Boolean,
+      default: true,
+    },
+    arrowDirection: {
       type: String,
-      default: "date",
+      default: "right",
+    },
+    showRightIcon: {
+      type: Boolean,
+      default: false,
+    },
+    rightIcon: {
+      type: String,
+      default: "calendar",
+    },
+    // 默认开始时间 只认YYYY-MM-DD格式
+    defaultStartTime: {
+      type: String,
+      default: dayjs().subtract(1, "day").format("YYYY-MM-DD"),
+    },
+    // 默认结束时间 只认YYYY-MM-DD格式
+    defaultEndTime: {
+      type: String,
+      default: dayjs().format("YYYY-MM-DD"),
+    },
+    pickerTitle: {
+      type: String,
+      default: "",
     },
   },
   data() {
-    const currentDate = this.getDate({
-      format: true,
-    });
-
     return {
-      popcash: false,
-      startTime: "",
-      endTime: "",
-      timeSelectActive: 1,
-      currentDate: "",
-      date: currentDate,
       visible: false,
+      showPicker: false,
+      startTime: "开始时间", // 最终选定的开始时间
+      endTime: "结束时间", // 最终选定的结束时间
+      startTimeDisplay: "开始时间", // picker当前选择的开始时间
+      endTimeDisplay: "结束时间", // picker当前选择的结束时间
       timeIndex: 0, // 0表示正在选开始时间 1表示正在选结束时间
-      startTimeDisplay: "开始时间", // 当前选择的开始时间显示
-      endTimeDisplay: "结束时间", // 当前选择的结束时间显示
       years: Array.from(Array(dayjs().year()), (v, k) => k + 1).slice(1999), // 年份列表 起始年份2000,
       months: Array.from(Array(12), (v, k) => k + 1),
       days: Array.from(Array(31), (v, k) => k + 1),
       year: dayjs().year(),
       month: dayjs().month() + 1,
       day: dayjs().date(),
-      curData: [9999, dayjs().month(), dayjs().date()], // 选项的index值组成的数组
+      curData: [dayjs().year(), dayjs().month(), dayjs().date()], // 选项的index值组成的数组; 数字大于可选项长度时会选择最后一项
+      indicatorStyle: `height: 100rpx;`, // 选中框的样式; 直接赋值会有警告
     };
   },
   mounted() {
-    // 初始值
-    this.startTimeDisplay = dayjs().subtract(1, "day").format("YYYY-MM-DD");
-    this.endTimeDisplay = dayjs().format("YYYY-MM-DD");
+    this.bindModeChange(this.mode);
     this.visible = true;
-    this.timeChose(0);
+    this.timeSwitch(0);
   },
-  computed: {},
+  watch: {
+    mode(newMode) {
+      this.bindModeChange(newMode);
+    },
+  },
   methods: {
-    bindChange(e) {
+    bindModeChange(mode: string) {
+      // 默认值是否合法
+      const startTimeIsValid = dayjs(
+        this.defaultStartTime,
+        "YYYY-MM-DD",
+        true
+      ).isValid();
+      const endTimeIsValid = dayjs(
+        this.defaultEndTime,
+        "YYYY-MM-DD",
+        true
+      ).isValid();
+      // 不同模式下的初始值设置
+      switch (mode) {
+        case "date":
+          this.startTime = this.startTimeDisplay = startTimeIsValid
+            ? dayjs(this.defaultStartTime).format("YYYY-MM-DD")
+            : dayjs().format("YYYY-MM-DD");
+          this.endTime = this.endTimeDisplay = endTimeIsValid
+            ? dayjs(this.defaultEndTime).format("YYYY-MM-DD")
+            : dayjs().format("YYYY-MM-DD");
+          break;
+        case "week":
+          this.startTime = this.startTimeDisplay = startTimeIsValid
+            ? dayjs(this.defaultStartTime).year() +
+              "年第" +
+              dayjs(this.defaultStartTime).week() +
+              "周"
+            : dayjs().year() + "年第" + dayjs().week() + "周";
+          this.endTime = this.endTimeDisplay = endTimeIsValid
+            ? dayjs(this.defaultEndTime).year() +
+              "年第" +
+              dayjs(this.defaultEndTime).week() +
+              "周"
+            : dayjs().year() + "年第" + dayjs().week() + "周";
+          break;
+        case "month":
+          this.startTime = this.startTimeDisplay = startTimeIsValid
+            ? dayjs(this.defaultStartTime).format("YYYY年MM月")
+            : dayjs().format("YYYY年MM月");
+          this.endTime = this.endTimeDisplay = endTimeIsValid
+            ? dayjs(this.defaultEndTime).format("YYYY年MM月")
+            : dayjs().format("YYYY年MM月");
+          break;
+        case "year":
+          this.startTime = this.startTimeDisplay = startTimeIsValid
+            ? dayjs(this.defaultStartTime).format("YYYY年")
+            : dayjs().format("YYYY年");
+          this.endTime = this.endTimeDisplay = endTimeIsValid
+            ? dayjs(this.defaultEndTime).format("YYYY年")
+            : dayjs().format("YYYY年");
+          break;
+      }
+    },
+    show() {
+      this.showPicker = true;
+    },
+    close() {
+      this.showPicker = false;
+    },
+    bindChange(e: any) {
       // 选项的index值组成的数组
       const val = e.detail.value;
       this.curData = val;
@@ -159,7 +276,7 @@ export default Vue.extend({
           .format("YYYY-MM-DD");
       }
     },
-    timeChose(index: number) {
+    timeSwitch(index: number) {
       // 切换选择开始时间/结束时间
       this.timeIndex = index;
       const date = index === 0 ? this.startTimeDisplay : this.endTimeDisplay;
@@ -169,71 +286,7 @@ export default Vue.extend({
         this.days.indexOf(dayjs(date).date()),
       ];
     },
-    popChange(e) {
-      console.log("----popChange---", e);
-      if (!e.show) {
-        var obj = {
-          isclose: true,
-        };
-        this.$emit("returnDate", obj);
-      }
-    },
-    show() {
-      this.popcash = true;
-    },
-    close() {
-      this.popcash = false;
-    },
-    dateMinus(date1, date2) {
-      var sdate = new Date(date1.replace(/-/g, "/"));
-      var now = new Date(date2.replace(/-/g, "/"));
-      var days = now.getTime() - sdate.getTime();
-      var day = parseInt(days / (1000 * 60 * 60 * 24));
-      return day;
-    },
-    startDateChange(e) {
-      this.timeIndex = 0;
-      this.startTimeDisplay = e.target.value;
-    },
-    endDateChange(e) {
-      this.timeIndex = 1;
-      this.endTimeDisplay = e.target.value;
-    },
-    getDate(type) {
-      const date = new Date();
-      let year = date.getFullYear();
-      let month = date.getMonth() + 1;
-      let day = date.getDate();
-
-      if (type === "start") {
-        year = year - 50;
-      } else if (type === "end") {
-        year = year + 2;
-      }
-      month = month > 9 ? month : "0" + month;
-      day = day > 9 ? day : "0" + day;
-      return `${year}-${month}-${day}`;
-    },
-    handleSetActive(active) {
-      this.timeSelectActive = active;
-
-      let time;
-      if (active === 1) {
-        time = this.startTimeDisplay.split("-");
-      } else {
-        time = this.endTimeDisplay.split("-");
-      }
-
-      this.currentDate = new Date(time[0], +time[1] - 1, time[2]);
-    },
-    timeSelectInput(evt) {
-      if (this.timeSelectActive == 1) {
-        this.startTimeDisplay = evt.getValues().join("-");
-      } else if (this.timeSelectActive == 2) {
-        this.endTimeDisplay = evt.getValues().join("-");
-      }
-    },
-    handleSelectSure() {
+    handleSelectConfirm() {
       if (this.startTimeDisplay == "开始时间") {
         uni.showToast({
           title: "请选择开始时间",
@@ -248,35 +301,27 @@ export default Vue.extend({
         });
         return;
       }
-      var start = this.startTimeDisplay.split("-");
-      var end = this.endTimeDisplay.split("-");
-      var totalDay = 0;
-      if (
-        new Date(start[0], +start[1] - 1, start[2]) >
-        new Date(end[0], +end[1] - 1, end[2])
+      if (dayjs(this.startTimeDisplay) > dayjs(this.endTimeDisplay)) {
+        uni.showToast({
+          title: "开始时间需早于结束时间",
+          icon: "none",
+        });
+        return;
+      } else if (
+        dayjs(this.endTimeDisplay).diff(this.startTimeDisplay, "week") > 5
       ) {
-        this.startTime = this.endTimeDisplay;
-        this.endTime = this.startTimeDisplay;
-        totalDay = this.dateMinus(this.endTimeDisplay, this.startTimeDisplay);
-      } else {
-        this.startTime = this.startTimeDisplay;
-        this.endTime = this.endTimeDisplay;
-        totalDay = this.dateMinus(this.startTimeDisplay, this.endTimeDisplay);
+        uni.showToast({
+          title: "时间区间不能超过5周",
+          icon: "none",
+        });
+        return;
       }
-      // console.log(this.startTime, this.endTime)
-
-      // if (+totalDay > 31) {
-      // 	uni.showToast({
-      // 		title: '最多可查询31天内的数据',
-      // 		icon: 'none'
-      // 	});
-      // 	return;
-      // }
-
-      var obj = {
-        startTime: this.startTime,
-        endTime: this.endTime,
-        isclose: false,
+      this.startTime = this.startTimeDisplay;
+      this.endTime = this.endTimeDisplay;
+      const obj = {
+        startTime: this.startTimeDisplay,
+        endTime: this.endTimeDisplay,
+        isClose: false, // 非取消关闭
       };
       this.$emit("returnDate", obj);
       this.close();
@@ -286,64 +331,70 @@ export default Vue.extend({
 </script>
 
 <style scoped lang="scss">
-.super-date-picker-popup-container {
-  height: 500rpx;
-  background: #fff;
-  .popup-title {
-    height: 90rpx;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    .u-title {
-      font-size: 30rpx;
-    }
-    .u-popup-cancel-btn {
-      color: #999;
-      padding: 0 30rpx;
-      height: 90rpx;
-      line-height: 90rpx;
-    }
-    .u-popup-sure-btn {
-      color: #008fff;
-      padding: 0 30rpx;
-      height: 90rpx;
-      line-height: 90rpx;
+.super-date-picker-container {
+  .cell-value-center {
+    .u-cell__value {
+      text-align: center !important;
     }
   }
-  .select-time-display {
-    height: 100rpx;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 34rpx;
-    .u-time-label {
-      color: #ccc;
-      width: 220rpx;
-      height: 60rpx;
-      line-height: 60rpx;
-      border-bottom: 1px solid #ccc;
-      text-align: center;
-      margin: 0 40rpx;
-    }
-  }
-  .picker-sheet {
-    height: 310rpx;
-    .mpvue-picker-view {
-      width: 100%;
-      height: 100%;
-      background-color: rgba(255, 255, 255, 1);
-      .item {
-        text-align: center;
-        width: 100%;
-        height: 100rpx;
-        line-height: 100rpx;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+
+  .popup-container {
+    height: 500rpx;
+    background: #fff;
+    .popup-title {
+      height: 90rpx;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .u-title {
         font-size: 30rpx;
+      }
+      .u-popup-cancel-btn {
+        color: #999;
+        padding: 0 30rpx;
+        height: 90rpx;
+        line-height: 90rpx;
+      }
+      .u-popup-sure-btn {
+        color: #008fff;
+        padding: 0 30rpx;
+        height: 90rpx;
+        line-height: 90rpx;
+      }
+    }
+    .select-time-display {
+      height: 100rpx;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 34rpx;
+      .u-time-label {
+        color: #ccc;
+        width: 220rpx;
+        height: 60rpx;
+        line-height: 60rpx;
+        border-bottom: 1px solid #ccc;
+        text-align: center;
+        margin: 0 40rpx;
+      }
+    }
+    .picker-sheet {
+      height: 310rpx;
+      .mpvue-picker-view {
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 1);
+        .item {
+          text-align: center;
+          width: 100%;
+          height: 100rpx;
+          line-height: 100rpx;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: 30rpx;
+        }
       }
     }
   }
 }
 </style>
-
-
