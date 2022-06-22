@@ -149,11 +149,13 @@ export default Vue.extend({
     };
   },
   mounted() {
+    // 初始化
     this.bindModeChange(this.mode);
     this.visible = true;
     this.timeSwitch(0);
   },
   watch: {
+    // 监听模式 改变时 初始化
     mode(newMode) {
       this.bindModeChange(newMode);
     },
@@ -213,10 +215,11 @@ export default Vue.extend({
           break;
       }
     },
-    show() {
-      this.showPicker = true;
-    },
     close() {
+      // 点取消关闭时恢复正确显示
+      this.startTimeDisplay = this.startTime;
+      this.endTimeDisplay = this.startTime;
+      this.timeSwitch(0);
       this.showPicker = false;
     },
     bindChange(e: any) {
@@ -323,8 +326,8 @@ export default Vue.extend({
         endTime: this.endTimeDisplay,
         isClose: false, // 非取消关闭
       };
-      this.$emit("returnDate", obj);
-      this.close();
+      this.$emit("confirm", obj);
+      this.showPicker = false;
     },
   },
 });
