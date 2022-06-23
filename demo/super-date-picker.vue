@@ -15,11 +15,11 @@
           slot="right-icon"
           :name="rightIcon"
           size="32"
-          color="#333"
+          color="#666"
         ></u-icon>
       </u-cell-item>
     </u-cell-group>
-    <u-popup v-model="showPicker" mode="bottom">
+    <u-popup v-model="showPicker" mode="bottom" @open="open" @close="close">
       <view class="popup-container">
         <view class="popup-title">
           <view class="u-popup-cancel-btn" @click="close">取消</view>
@@ -32,14 +32,14 @@
           <view
             @click="timeSwitch(0)"
             class="u-time-label"
-            :style="{ color: timeIndex == 0 ? '#008fff' : '#666' }"
+            :style="{ color: timeIndex === 0 ? '#008fff' : '#666' }"
             >{{ startTimeDisplay }}</view
           >
           ~
           <view
             @click="timeSwitch(1)"
             class="u-time-label"
-            :style="{ color: timeIndex == 1 ? '#008fff' : '#666' }"
+            :style="{ color: timeIndex === 1 ? '#008fff' : '#666' }"
             >{{ endTimeDisplay }}</view
           >
         </view>
@@ -56,12 +56,17 @@
                 >{{ item }}年</view
               >
             </picker-view-column>
-            <picker-view-column>
+            <picker-view-column v-if="mode === 'month' || mode === 'date'">
               <view class="item" v-for="(item, index) in months" :key="index"
                 >{{ item }}月</view
               >
             </picker-view-column>
-            <picker-view-column>
+            <picker-view-column v-if="mode === 'week'">
+              <view class="item" v-for="(item, index) in weeks" :key="index"
+                >第{{ item }}周</view
+              >
+            </picker-view-column>
+            <picker-view-column v-if="mode === 'date'">
               <view class="item" v-for="(item, index) in days" :key="index"
                 >{{ item }}日</view
               >
@@ -77,14 +82,22 @@
 import Vue from "vue";
 import dayjs from "dayjs";
 import weekOfYear from "dayjs/plugin/weekOfYear";
+import isoWeeksInYear from "dayjs/plugin/isoWeeksInYear";
+import isLeapYear from "dayjs/plugin/isLeapYear";
 dayjs.extend(weekOfYear);
+dayjs.extend(isoWeeksInYear);
+dayjs.extend(isLeapYear);
 
 export default Vue.extend({
   name: "super-date-picker",
   props: {
     mode: {
-      type: String, // 可选模式 date | week | month | year
-      default: "date",
+      type: String,
+      default: "date", // 可选模式 date | week | month | year
+    },
+    maxRange: {
+      type: Number,
+      default: 0, // 最大区间长度 根据mode不同代表的单位不同 0表示无区间长度限制
     },
     barHeight: {
       type: Number,
@@ -92,7 +105,7 @@ export default Vue.extend({
     },
     title: {
       type: String,
-      default: "",
+      default: "时间段",
     },
     center: {
       type: Boolean,
@@ -140,12 +153,26 @@ export default Vue.extend({
       timeIndex: 0, // 0表示正在选开始时间 1表示正在选结束时间
       years: Array.from(Array(dayjs().year()), (v, k) => k + 1).slice(1999), // 年份列表 起始年份2000,
       months: Array.from(Array(12), (v, k) => k + 1),
+      weeks: Array.from(Array(53), (v, k) => k + 1), // ISO周数最多一年可能有53周
       days: Array.from(Array(31), (v, k) => k + 1),
       year: dayjs().year(),
       month: dayjs().month() + 1,
+      week: dayjs().week(),
       day: dayjs().date(),
       curData: [dayjs().year(), dayjs().month(), dayjs().date()], // 选项的index值组成的数组; 数字大于可选项长度时会选择最后一项
       indicatorStyle: `height: 100rpx;`, // 选中框的样式; 直接赋值会有警告
+      limitMap: {
+        date: "day",
+        month: "month",
+        week: "week",
+        year: "year",
+      },
+      limitMapUnit: {
+        date: "天",
+        month: "个月",
+        week: "周",
+        year: "年",
+      },
     };
   },
   mounted() {
@@ -161,6 +188,15 @@ export default Vue.extend({
     },
   },
   methods: {
+    open() {
+      // 恢复正确显示
+      this.startTimeDisplay = this.startTime;
+      this.endTimeDisplay = this.endTime;
+      this.timeSwitch(0);
+    },
+    close() {
+      this.showPicker = false;
+    },
     bindModeChange(mode: string) {
       // 默认值是否合法
       const startTimeIsValid = dayjs(
@@ -215,22 +251,63 @@ export default Vue.extend({
           break;
       }
     },
-    close() {
-      // 点取消关闭时恢复正确显示
-      this.startTimeDisplay = this.startTime;
-      this.endTimeDisplay = this.startTime;
-      this.timeSwitch(0);
-      this.showPicker = false;
+    timeSwitch(index: number) {
+      // 切换选择开始时间/结束时间
+      this.timeIndex = index;
+      const date = index === 0 ? this.startTimeDisplay : this.endTimeDisplay;
+      let indexArr = [];
+      switch (this.mode) {
+        case "date":
+          indexArr = date.split("-");
+          this.curData = [
+            this.years.indexOf(Number(indexArr[0])),
+            this.months.indexOf(Number(indexArr[1])),
+            this.days.indexOf(Number(indexArr[2])),
+          ];
+          break;
+        case "week":
+          indexArr = date.replace("周", "").split("年第");
+          this.curData = [
+            this.years.indexOf(Number(indexArr[0])),
+            this.weeks.indexOf(Number(indexArr[1])),
+          ];
+          break;
+        case "month":
+          indexArr = date.replace("月", "").split("年");
+          this.curData = [
+            this.years.indexOf(Number(indexArr[0])),
+            this.months.indexOf(Number(indexArr[1])),
+          ];
+          break;
+        case "year":
+          this.curData = [this.years.indexOf(Number(date.replace("年", "")))];
+          break;
+      }
     },
     bindChange(e: any) {
       // 选项的index值组成的数组
-      const val = e.detail.value;
-      this.curData = val;
-      this.year = this.years[val[0]];
-      this.month = this.months[val[1]];
-      this.day = this.days[val[2]];
+      const val = (this.curData = e.detail.value);
 
-      // 选择不同月份显示的天数不同
+      switch (this.mode) {
+        case "date":
+          this.year = this.years[val[0]];
+          this.month = this.months[val[1]];
+          this.day = this.days[val[2]];
+          break;
+        case "week":
+          this.year = this.years[val[0]];
+          this.week = this.weeks[val[1]];
+          break;
+        case "month":
+          this.year = this.years[val[0]];
+          this.month = this.months[val[1]];
+          break;
+        case "year":
+          this.year = this.years[val[0]];
+          break;
+      }
+
+      // 选择不同月份显示的可选天数不同
       let dayCount = 31;
       switch (this.month) {
         case 2:
@@ -251,11 +328,19 @@ export default Vue.extend({
       }
       this.days = Array.from(Array(dayCount), (v, k) => k + 1);
 
+      // 选择不同年份可选的周数不同
+      this.weeks = Array.from(
+        Array(dayjs(this.year).isoWeeksInYear()),
+        (v, k) => k + 1
+      );
+
       // 处理选择今年的情况
       if (this.year == dayjs().year()) {
-        // 最多显示到当前月份
+        // 最多可选当前月份
         this.months = Array.from(Array(dayjs().month() + 1), (v, k) => k + 1);
-        // 如果选择的是当前月份，日最多显示到今天
+        // 最多可选当前周
+        this.weeks = Array.from(Array(dayjs().week()), (v, k) => k + 1);
+        // 如果选择的是当前月份，最多可选当日
         if (this.month == dayjs().month() + 1) {
           this.days = Array.from(Array(dayjs().date()), (v, k) => k + 1);
         }
@@ -263,31 +348,33 @@ export default Vue.extend({
         this.months = Array.from(Array(12), (v, k) => k + 1);
       }
 
-      if (this.timeIndex == 0) {
-        // 当前选中的开始时间
-        this.startTimeDisplay = dayjs()
-          .set("year", this.year)
-          .set("month", this.month - 1)
-          .set("date", this.day)
-          .format("YYYY-MM-DD");
-      } else {
-        // 当前选中的结束时间
-        this.endTimeDisplay = dayjs()
-          .set("year", this.year)
-          .set("month", this.month - 1)
-          .set("date", this.day)
-          .format("YYYY-MM-DD");
+      // 所选时间预览
+      const tempDayjs = dayjs()
+        .set("year", this.year)
+        .set("month", this.month - 1)
+        .set("date", this.day);
+      switch (this.mode) {
+        case "date":
+          this.timeIndex === 0
+            ? (this.startTimeDisplay = tempDayjs.format("YYYY-MM-DD"))
+            : (this.endTimeDisplay = tempDayjs.format("YYYY-MM-DD"));
+          break;
+        case "week":
+          this.timeIndex === 0
+            ? (this.startTimeDisplay = `${this.year}年第${this.week}周`)
+            : (this.endTimeDisplay = `${this.year}年第${this.week}周`);
+          break;
+        case "month":
+          this.timeIndex === 0
+            ? (this.startTimeDisplay = tempDayjs.format("YYYY年MM月"))
+            : (this.endTimeDisplay = tempDayjs.format("YYYY年MM月"));
+          break;
+        case "year":
+          this.timeIndex === 0
+            ? (this.startTimeDisplay = tempDayjs.format("YYYY年"))
+            : (this.endTimeDisplay = tempDayjs.format("YYYY年"));
+          break;
       }
-    },
-    timeSwitch(index: number) {
-      // 切换选择开始时间/结束时间
-      this.timeIndex = index;
-      const date = index === 0 ? this.startTimeDisplay : this.endTimeDisplay;
-      this.curData = [
-        this.years.indexOf(dayjs(date).year()),
-        this.months.indexOf(dayjs(date).month() + 1),
-        this.days.indexOf(dayjs(date).date()),
-      ];
     },
     handleSelectConfirm() {
       if (this.startTimeDisplay == "开始时间") {
@@ -304,20 +391,72 @@ export default Vue.extend({
         });
         return;
       }
-      if (dayjs(this.startTimeDisplay) > dayjs(this.endTimeDisplay)) {
+
+      let tempStartTime = this.startTimeDisplay;
+      let tempEndTime = this.endTimeDisplay;
+      let indexArrSt,
+        indexArrEt = [];
+      switch (this.mode) {
+        case "week":
+          indexArrSt = this.startTimeDisplay.replace("周", "").split("年第");
+          indexArrEt = this.endTimeDisplay.replace("周", "").split("年第");
+          tempStartTime = dayjs()
+            .year(Number(indexArrSt[0]))
+            .week(Number(indexArrSt[1]))
+            .startOf("week")
+            .format("YYYY-MM-DD");
+          tempEndTime = dayjs()
+            .year(Number(indexArrEt[0]))
+            .week(Number(indexArrEt[1]))
+            .endOf("week")
+            .format("YYYY-MM-DD");
+          break;
+        case "month":
+          indexArrSt = this.startTimeDisplay.replace("月", "").split("年");
+          indexArrEt = this.endTimeDisplay.replace("月", "").split("年");
+          tempStartTime = dayjs()
+            .year(Number(indexArrSt[0]))
+            .week(Number(indexArrSt[1]))
+            .startOf("month")
+            .format("YYYY-MM-DD");
+          tempEndTime = dayjs()
+            .year(Number(indexArrEt[0]))
+            .week(Number(indexArrEt[1]))
+            .endOf("month")
+            .format("YYYY-MM-DD");
+          break;
+        case "year":
+          tempStartTime = dayjs()
+            .year(Number(this.startTimeDisplay.replace("年", "")))
+            .startOf("year")
+            .format("YYYY-MM-DD");
+          tempEndTime = dayjs()
+            .year(Number(this.endTimeDisplay.replace("年", "")))
+            .endOf("year")
+            .format("YYYY-MM-DD");
+          break;
+      }
+
+      if (dayjs(tempStartTime) > dayjs(tempEndTime)) {
         uni.showToast({
           title: "开始时间需早于结束时间",
           icon: "none",
         });
         return;
-      } else if (
-        dayjs(this.endTimeDisplay).diff(this.startTimeDisplay, "week") > 5
-      ) {
-        uni.showToast({
-          title: "时间区间不能超过5周",
-          icon: "none",
-        });
-        return;
+      } else if (this.maxRange) {
+        // 有限制区间长度
+        if (
+          dayjs(tempEndTime).diff(tempStartTime, this.limitMap[this.mode]) >
+          this.maxRange - 1
+        ) {
+          uni.showToast({
+            title: `时间区间不能超过${this.maxRange}${
+              this.limitMapUnit[this.mode]
+            }`,
+            icon: "none",
+          });
+          return;
+        }
       }
       this.startTime = this.startTimeDisplay;
       this.endTime = this.endTimeDisplay;
@@ -327,7 +466,7 @@ export default Vue.extend({
         isClose: false, // 非取消关闭
       };
       this.$emit("confirm", obj);
-      this.showPicker = false;
+      this.close();
     },
   },
 });
@@ -336,8 +475,10 @@ export default Vue.extend({
 <style scoped lang="scss">
 .super-date-picker-container {
   .cell-value-center {
+    color: #666 !important;
     .u-cell__value {
       text-align: center !important;
+      color: #666 !important;
     }
   }
 
@@ -373,11 +514,11 @@ export default Vue.extend({
       font-size: 34rpx;
       .u-time-label {
         color: #ccc;
-        width: 220rpx;
         height: 60rpx;
         line-height: 60rpx;
         border-bottom: 1px solid #ccc;
         text-align: center;
+        padding: 0 10rpx;
         margin: 0 40rpx;
       }
     }
