@@ -475,7 +475,7 @@ export default Vue.extend({
 <style scoped lang="scss">
 .super-date-picker-container {
   .cell-value-center {
-    :deep(.u-cell__value) {
+    ::v-deep .u-cell__value {
       text-align: center !important;
       color: #666 !important;
     }
