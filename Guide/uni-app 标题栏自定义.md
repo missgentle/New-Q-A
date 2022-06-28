@@ -46,7 +46,8 @@ uni-app原生导航栏也能实现一些顶部自定义按钮+搜索框，只需
 其中text是字体编码，iconfont页面上可以看到，也可以打开压缩包中的demo_index.html获取    
 例如我这里就是612    
 <img src="img/iconfont3.png" />    
-**注意：** 这里两个图标都"float": "right"，和网页float一样，写在最前面的会最靠右，且index值越小    
+
+**注意：**  这里两个图标都"float": "right"，和网页float一样，写在最前面的会最靠右，且index值越小    
 
 4. 监听标题栏按钮、输入框事件    
 uni-app给出了相应API：onNavigationBarButtonTap和onNavigationBarSearchInputChanged，写在相应的页面中即可    
@@ -59,6 +60,7 @@ export default Vue.extend({
   },
 })
 ```
+
 **偶然的小发现：** 如果底部导航栏tabBar有设置入口，标题栏按钮入口好像会失效    
 
 
