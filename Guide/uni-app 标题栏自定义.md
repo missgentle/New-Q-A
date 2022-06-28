@@ -1,6 +1,6 @@
 # uni-app 标题栏自定义
 
-uni-app自定义导航栏|仿微信顶部导航uni_headerBar，支持标题居左、居中、搜索条，按钮可传入文字/字体图标/图片   
+> uni-app自定义导航栏|仿微信顶部导航uni_headerBar，支持标题居左、居中、搜索条，按钮可传入文字/字体图标/图片   
 
 ## 修改uniApp原生导航栏
 
@@ -66,7 +66,7 @@ export default Vue.extend({
 
 ## uniApp自定义导航栏
 
-将navigationStyle设为custom或titleNView设为false时，原生导航栏不显示，这时就能自定义导航栏    
+> 将navigationStyle设为custom或titleNView设为false时，原生导航栏不显示，这时就能自定义导航栏    
 
 
 
