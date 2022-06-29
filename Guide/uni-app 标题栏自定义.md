@@ -68,9 +68,58 @@ export default Vue.extend({
 
 > 将navigationStyle设为custom或titleNView设为false时，原生导航栏不显示，这时就能自定义导航栏    
 
+1. 修改src/pages.json文件配置app-plus    
+```
+"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+  {
+    "path": "pages/home/index",
+    "style": {
+      "app-plus": {
+        "titleNView": false
+      }
+    }
+  },
+  // ... 其他代码 ...
+]
+```
+2. 要注意非H5端，手机顶部状态栏区域会被页面内容覆盖。这是因为窗体是沉浸式的，即全屏可写内容。所以状态栏需重新计算处理高度。
+在App.vue里面设置即可 (*在微信小程序里，右上角始的胶囊按钮不受取消原生导航栏设置的影响*)    
+```
+onLaunch() {
+  console.log('App Launch')
+  uni.getSystemInfo({
+    success: (e) => {
+      Vue.prototype.StatusBar = e.statusBarHeight;
+      
+      // #ifndef MP
+      if (e.platform == 'android') {
+        Vue.prototype.CustomBar = (e.statusBarHeight || 0) + 50;
+      } else {
+        Vue.prototype.CustomBar = (e.statusBarHeight || 0) + 45;
+      }
+      // #endif
 
+      // #ifdef MP-WEIXIN
+      let custom = uni.getMenuButtonBoundingClientRect()
+      Vue.prototype.Custom = custom
+      Vue.prototype.CustomBar = custom.bottom + custom.top - (e.statusBarHeight || 0)
+      // #endif
+
+     // #ifdef MP-ALIPAY
+      Vue.prototype.CustomBar = (e.statusBarHeight || 0) + (e.titleBarHeight || 0)
+      // #endif
+    }
+  })
+  // 横屏锁定
+  // #ifdef APP-PLUS
+  plus.screen.lockOrientation("portrait-primary");
+  // #endif
+}
+```
+3. 页面中自行编写元素作为导航栏即可，必要时可封装组件    
 
 
 参考： 
 - https://blog.csdn.net/qq_35898865/article/details/105639507
 - https://blog.csdn.net/yanxinyun1990/article/details/100919657
+- https://blog.csdn.net/sayyy/article/details/111402039
