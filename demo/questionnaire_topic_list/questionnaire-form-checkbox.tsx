@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react'
-import { Form, Checkbox, Space, Input } from 'antd'
+import { Form, Checkbox, Space } from 'antd'
 import { useStore, TopicInfo, TopicOptionInfo } from '@/stores'
 
 export default observer(
