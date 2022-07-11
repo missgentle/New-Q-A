@@ -15,6 +15,7 @@
 ## demo 示例代码速查 
 
 - g2/echarts图表React封装 chart_component
+- 生成问卷 questionnaire_topic_list
 - 检索条 search_bar
 - 超时自动登出hook auto-logout.ts
 - 离开前保存 my-prompt.tsx 离开前提示 my-prompt-simple.tsx
