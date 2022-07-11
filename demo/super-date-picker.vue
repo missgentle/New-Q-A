@@ -81,9 +81,11 @@
 <script lang="ts">
 import Vue from "vue";
 import dayjs from "dayjs";
+import "dayjs/locale/zh-cn";
 import weekOfYear from "dayjs/plugin/weekOfYear";
 import isoWeeksInYear from "dayjs/plugin/isoWeeksInYear";
 import isLeapYear from "dayjs/plugin/isLeapYear";
+dayjs.locale("zh-cn"); // 本地化语言配置会影响周的计算方式
 dayjs.extend(weekOfYear);
 dayjs.extend(isoWeeksInYear);
 dayjs.extend(isLeapYear);
@@ -161,18 +163,6 @@ export default Vue.extend({
       day: dayjs().date(),
       curData: [dayjs().year(), dayjs().month(), dayjs().date()], // 选项的index值组成的数组; 数字大于可选项长度时会选择最后一项
       indicatorStyle: `height: 100rpx;`, // 选中框的样式; 直接赋值会有警告
-      limitMap: {
-        date: "day",
-        month: "month",
-        week: "week",
-        year: "year",
-      },
-      limitMapUnit: {
-        date: "天",
-        month: "个月",
-        week: "周",
-        year: "年",
-      },
     };
   },
   mounted() {
@@ -416,12 +406,12 @@ export default Vue.extend({
           indexArrEt = this.endTimeDisplay.replace("月", "").split("年");
           tempStartTime = dayjs()
             .year(Number(indexArrSt[0]))
-            .week(Number(indexArrSt[1]))
+            .month(Number(indexArrSt[1]) - 1)
             .startOf("month")
             .format("YYYY-MM-DD");
           tempEndTime = dayjs()
             .year(Number(indexArrEt[0]))
-            .week(Number(indexArrEt[1]))
+            .month(Number(indexArrEt[1]) - 1)
             .endOf("month")
             .format("YYYY-MM-DD");
           break;
@@ -444,15 +434,28 @@ export default Vue.extend({
         });
         return;
       } else if (this.maxRange) {
+        const unit =
+          this.mode === "year"
+            ? "年"
+            : this.mode === "month"
+            ? "个月"
+            : this.mode === "week"
+            ? "周"
+            : "天";
         // 有限制区间长度
         if (
-          dayjs(tempEndTime).diff(tempStartTime, this.limitMap[this.mode]) >
+          dayjs(tempEndTime).diff(
+            tempStartTime,
+            this.mode === "year" ||
+              this.mode === "month" ||
+              this.mode === "week"
+              ? this.mode
+              : "day"
+          ) >
           this.maxRange - 1
         ) {
           uni.showToast({
-            title: `时间区间不能超过${this.maxRange}${
-              this.limitMapUnit[this.mode]
-            }`,
+            title: `时间区间不能超过${this.maxRange}${unit}`,
             icon: "none",
           });
           return;
@@ -461,8 +464,8 @@ export default Vue.extend({
       this.startTime = this.startTimeDisplay;
       this.endTime = this.endTimeDisplay;
       const obj = {
-        startTime: this.startTimeDisplay,
-        endTime: this.endTimeDisplay,
+        startTime: tempStartTime,
+        endTime: tempEndTime,
         isClose: false, // 非取消关闭
       };
       this.$emit("confirm", obj);
