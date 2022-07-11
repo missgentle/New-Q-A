@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { observer } from 'mobx-react'
-import { Form, Input } from '@gyzn/linglong-ui'
+import { Form, Input } from 'antd'
 import { useStore, TopicInfo } from '@/stores'
 
 const { TextArea } = Input
