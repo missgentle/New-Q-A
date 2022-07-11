@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { observer } from 'mobx-react'
-import { Anchor } from '@gyzn/linglong-ui'
+import { Anchor } from 'antd'
 
 const { Link } = Anchor
 const GroupNumber = 10
