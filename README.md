@@ -23,3 +23,5 @@
 - Vue时间区间选择picker组件封装 super-date-picker.vue    
   参考：https://blog.csdn.net/weixin_44872995/article/details/119388676    
   相关issue：https://github.com/missgentle/New-Q-A/issues/4
+- vue.config.js 实用配置    
+  参考 https://blog.csdn.net/qq_41000974/article/details/117884603
