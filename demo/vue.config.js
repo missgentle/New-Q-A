@@ -1,4 +1,6 @@
 const FileManagerPlugin = require("filemanager-webpack-plugin");
+const version = require('./package.json').version
+
 module.exports = {
     // 输出文件目录，默认dist
     // outputDir: `dist`,
@@ -15,7 +17,7 @@ module.exports = {
                             archive: [
                                 {
                                     source: `./dist`,
-                                    destination: `./zip/my-zip.zip`
+                                    destination: `./zip/my-zip-${version}.zip`
                                 }
                             ]
                         }
