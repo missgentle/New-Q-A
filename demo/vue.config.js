@@ -17,7 +17,7 @@ module.exports = {
                             archive: [
                                 {
                                     source: `./dist`,
-                                    destination: `./zip/my-zip-${version}.zip`
+                                    destination: `./zip/my-zip-${process.env.UNI_PLATFORM}-${version}.zip`
                                 }
                             ]
                         }
